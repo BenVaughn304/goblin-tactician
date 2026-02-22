@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Tactician – Goblin Engine</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #121212;
+      color: white;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #7dd3fc;
+    }
+
+    .card {
+      background: #1f1f1f;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 15px;
+    }
+
+    input, select {
+      margin: 5px 0;
+      padding: 5px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+
+    button {
+      padding: 10px;
+      background: #7dd3fc;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: bold;
+      margin-top: 10px;
+      margin-right: 5px;
+    }
+
+    button:hover {
+      background: #06b6d4;
+    }
+
+    .output {
+      background: #0f172a;
+      padding: 15px;
+      border-radius: 10px;
+      margin-top: 10px;
+    }
+
+    .output h2 {
+      color: #7dd3fc;
+      margin-top: 0;
+    }
+
+    .output ul {
+      margin: 10px 0;
+    }
+
+    .encounter-board {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 15px;
+      margin-top: 15px;
+    }
+
+    .goblin-card {
+      background: #1f1f1f;
+      padding: 15px;
+      border-radius: 10px;
+      border-left: 4px solid #7dd3fc;
+    }
+
+    .goblin-card h3 {
+      margin-top: 0;
+      color: #7dd3fc;
+    }
+
+    .goblin-card input, .goblin-card select {
+      margin-bottom: 10px;
+    }
+
+    .preset-buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 10px;
+    }
+
+    .preset-buttons button {
+      padding: 5px 10px;
+      font-size: 0.9em;
+      margin: 0;
+    }
+
+    label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    .slider-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 20px;
+      margin: 20px 0;
+    }
+
+    .slider-item {
+      background: #1f1f1f;
+      padding: 15px;
+      border-radius: 10px;
+    }
+
+    .slider-item label {
+      display: block;
+      margin-bottom: 10px;
+      margin-top: 0;
+    }
+
+    .slider-item input[type="range"] {
+      width: 100%;
+      margin: 0;
+    }
+
+    .slider-value {
+      text-align: center;
+      color: #7dd3fc;
+      font-weight: bold;
+      margin-top: 5px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>🗡️ Goblin Tactical Engine</h1>
+
+<div class="card">
+  <h2>Single Goblin Analyzer</h2>
+  
+  <label>Current HP</label>
+  <input type="number" id="hp" value="7" min="1">
+
+  <label>Distance to Target (ft)</label>
+  <input type="number" id="distance" value="40" min="0">
+
+  <label>In Melee?</label>
+  <select id="melee">
+    <option value="false">No</option>
+    <option value="true">Yes</option>
+  </select>
+
+  <label>Hidden?</label>
+  <select id="hidden">
+    <option value="false">No</option>
+    <option value="true">Yes</option>
+  </select>
+
+  <label>Target 3/4 Cover?</label>
+  <select id="cover">
+    <option value="false">No</option>
+    <option value="true">Yes</option>
+  </select>
+
+  <label>Another Target Visible?</label>
+  <select id="another">
+    <option value="true">Yes</option>
+    <option value="false">No</option>
+  </select>
+
+  <label>Target HP State</label>
+  <select id="targetHP">
+    <option value="healthy">Healthy</option>
+    <option value="bloodied">Bloodied</option>
+    <option value="nearDeath">Near Death</option>
+  </select>
+
+  <button onclick="runEngine()">Calculate Behavior</button>
+</div>
+
+<div class="output" id="output"></div>
+
+<hr>
+
+<h2>Multi-Goblin Encounter</h2>
+
+<div class="card">
+  <h3>Personality Configuration</h3>
+  
+  <div class="slider-container">
+    <div class="slider-item">
+      <label>Self Preservation</label>
+      <input type="range" id="selfPreservation" min="1" max="10" value="9" oninput="document.getElementById('selfPreservationValue').textContent = this.value">
+      <div class="slider-value" id="selfPreservationValue">9</div>
+    </div>
+
+    <div class="slider-item">
+      <label>Aggression</label>
+      <input type="range" id="aggression" min="1" max="10" value="5" oninput="document.getElementById('aggressionValue').textContent = this.value">
+      <div class="slider-value" id="aggressionValue">5</div>
+    </div>
+
+    <div class="slider-item">
+      <label>Greed</label>
+      <input type="range" id="greed" min="1" max="10" value="6" oninput="document.getElementById('greedValue').textContent = this.value">
+      <div class="slider-value" id="greedValue">6</div>
+    </div>
+
+    <div class="slider-item">
+      <label>Tactical Discipline</label>
+      <input type="range" id="tacticalDiscipline" min="1" max="10" value="6" oninput="document.getElementById('tacticalDisciplineValue').textContent = this.value">
+      <div class="slider-value" id="tacticalDisciplineValue">6</div>
+    </div>
+  </div>
+
+  <button onclick="savePreset()">Save Personality Preset</button>
+  <div class="preset-buttons" id="presetList"></div>
+</div>
+
+<button onclick="addGoblin()">➕ Add Goblin to Encounter</button>
+
+<h2>Encounter Board</h2>
+<div class="encounter-board" id="encounterBoard"></div>
+
+<script>
+// ===============================
+// Goblin Behavior Engine
+// ===============================
+
+function calculateGoblinBehavior(state, personality) {
+  let decision = {
+    mode: "DEFENSIVE",
+    action: "Dodge",
+    movement: "Retreat 30 ft",
+    bonusAction: "Ready Action",
+    reasoning: []
+  };
+
+  // Self-preservation check
+  const hpPercent = (state.currentHP / 7) * 100;
+  if (hpPercent <= 30 && personality.selfPreservation > 5) {
+    decision.mode = "RETREAT";
+    decision.action = "Disengage";
+    decision.movement = "Move away from combat";
+    decision.bonusAction = "Dodge if possible";
+    decision.reasoning.push("HP critically low - prioritizing survival");
+    return decision;
+  }
+
+  // Hidden advantage
+  if (state.hidden) {
+    decision.mode = "AMBUSH";
+    decision.action = "Attack from hiding";
+    decision.movement = "Maintain stealth";
+    decision.bonusAction = "Hide again";
+    decision.reasoning.push("Hidden position - taking advantage of surprise");
+    return decision;
+  }
+
+  // Distance-based tactics
+  if (state.inMelee) {
+    if (personality.aggression > 6) {
+      decision.mode = "AGGRESSIVE";
+      decision.action = "Attack";
+      decision.movement = "Stand and fight";
+      decision.bonusAction = "Dodge";
+      decision.reasoning.push("In melee and aggressive - attacking");
+    } else {
+      decision.mode = "DEFENSIVE";
+      decision.action = "Dodge";
+      decision.movement = "Create distance";
+      decision.bonusAction = "Disengage";
+      decision.reasoning.push("In melee but cautious - creating space");
+    }
+  } else if (state.distanceToTarget <= 30) {
+    decision.mode = "TACTICAL";
+    decision.action = "Ranged Attack";
+    decision.movement = "Sidestep for cover";
+    decision.bonusAction = "Take aim";
+    decision.reasoning.push("Target within effective range - positioning for optimal attack");
+
+    if (state.targetHasThreeQuartersCover) {
+      decision.reasoning.push("Target in cover - wait for better positioning");
+    }
+  } else {
+    decision.mode = "APPROACH";
+    decision.action = "Move closer";
+    decision.movement = "Advance toward target";
+    decision.bonusAction = "Dash";
+    decision.reasoning.push("Target too far - closing distance");
+  }
+
+  // Target priority
+  if (!state.anotherTargetVisible && state.targetHPState === "nearDeath") {
+    decision.reasoning.push("Target near defeat - pressing advantage");
+  }
+
+  return decision;
+}
+
+// ===============================
+// Single Goblin Engine
+// ===============================
+
+function runEngine() {
+  const state = {
+    currentHP: parseInt(document.getElementById("hp").value),
+    distanceToTarget: parseInt(document.getElementById("distance").value),
+    inMelee: document.getElementById("melee").value === "true",
+    hidden: document.getElementById("hidden").value === "true",
+    targetHasThreeQuartersCover: document.getElementById("cover").value === "true",
+    anotherTargetVisible: document.getElementById("another").value === "true",
+    targetHPState: document.getElementById("targetHP").value
+  };
+
+  const personality = {
+    selfPreservation: parseInt(document.getElementById("selfPreservation").value),
+    aggression: parseInt(document.getElementById("aggression").value),
+    greed: parseInt(document.getElementById("greed").value),
+    tacticalDiscipline: parseInt(document.getElementById("tacticalDiscipline").value)
+  };
+
+  const decision = calculateGoblinBehavior(state, personality);
+
+  document.getElementById("output").innerHTML = `
+    <h2>Decision: ${decision.mode}</h2>
+    <p><strong>Action:</strong> ${decision.action}</p>
+    <p><strong>Movement:</strong> ${decision.movement}</p>
+    <p><strong>Bonus Action:</strong> ${decision.bonusAction}</p>
+    <p><strong>Reasoning:</strong></p>
+    <ul>${decision.reasoning.map(r => `<li>${r}</li>`).join("")}</ul>
+  `;
+}
+
+// ===============================
+// Multi-Goblin Encounter System
+// ===============================
+
+let encounter = [];
+let personalityPresets = JSON.parse(localStorage.getItem("goblinPresets")) || {};
+
+function addGoblin() {
+  const goblin = {
+    id: Date.now(),
+    name: "Goblin " + (encounter.length + 1),
+    currentHP: 7,
+    distanceToTarget: 40,
+    inMelee: false,
+    hidden: false,
+    targetHasThreeQuartersCover: false,
+    anotherTargetVisible: true,
+    targetHPState: "healthy"
+  };
+
+  encounter.push(goblin);
+  renderEncounter();
+}
+
+function removeGoblin(id) {
+  encounter = encounter.filter(g => g.id !== id);
+  renderEncounter();
+}
+
+function updateGoblin(id, field, value) {
+  const goblin = encounter.find(g => g.id === id);
+  if (goblin) {
+    goblin[field] = isNaN(value) ? value : parseInt(value);
+  }
+}
+
+function runGoblin(id) {
+  const goblin = encounter.find(g => g.id === id);
+  if (!goblin) return;
+
+  const personality = {
+    selfPreservation: parseInt(document.getElementById("selfPreservation").value),
+    aggression: parseInt(document.getElementById("aggression").value),
+    greed: parseInt(document.getElementById("greed").value),
+    tacticalDiscipline: parseInt(document.getElementById("tacticalDiscipline").value)
+  };
+
+  const decision = calculateGoblinBehavior(goblin, personality);
+
+  document.getElementById(
+    `output-${goblin.id}`
+  ).innerHTML = `
+    <strong>Decision: ${decision.mode}</strong><br>
+    Action: ${decision.action}<br>
+    Movement: ${decision.movement}<br>
+    Bonus: ${decision.bonusAction}<br>
+    <ul>${decision.reasoning.map(r => `<li>${r}</li>`).join("")}</ul>
+  `;
+}
+
+function renderEncounter() {
+  const board = document.getElementById("encounterBoard");
+  board.innerHTML = "";
+
+  encounter.forEach(goblin => {
+    board.innerHTML += `
+      <div class="goblin-card">
+        <h3>${goblin.name}</h3>
+        <label>HP</label>
+        <input type="number" value="${goblin.currentHP}" min="1" max="7"
+          onchange="updateGoblin(${goblin.id}, 'currentHP', this.value)">
+        
+        <label>Distance (ft)</label>
+        <input type="number" value="${goblin.distanceToTarget}" min="0"
+          onchange="updateGoblin(${goblin.id}, 'distanceToTarget', this.value)">
+        
+        <label>In Melee?</label>
+        <select onchange="updateGoblin(${goblin.id}, 'inMelee', this.value === 'true')">
+          <option value="false" ${!goblin.inMelee ? 'selected' : ''}>No</option>
+          <option value="true" ${goblin.inMelee ? 'selected' : ''}>Yes</option>
+        </select>
+        
+        <label>Hidden?</label>
+        <select onchange="updateGoblin(${goblin.id}, 'hidden', this.value === 'true')">
+          <option value="false" ${!goblin.hidden ? 'selected' : ''}>No</option>
+          <option value="true" ${goblin.hidden ? 'selected' : ''}>Yes</option>
+        </select>
+
+        <button onclick="runGoblin(${goblin.id})">🎯 Run AI Decision</button>
+        <button onclick="removeGoblin(${goblin.id})">❌ Remove</button>
+        
+        <div id="output-${goblin.id}" class="output"></div>
+      </div>
+    `;
+  });
+}
+
+// ===============================
+// Personality Preset System
+// ===============================
+
+function savePreset() {
+  const name = prompt("Enter preset name (e.g., 'Cowardly', 'Brave', 'Tactical'):"30);
+  if (!name) return;
+
+  const preset = {
+    selfPreservation: parseInt(document.getElementById("selfPreservation").value),
+    aggression: parseInt(document.getElementById("aggression").value),
+    greed: parseInt(document.getElementById("greed").value),
+    tacticalDiscipline: parseInt(document.getElementById("tacticalDiscipline").value)
+  };
+
+  personalityPresets[name] = preset;
+  localStorage.setItem("goblinPresets", JSON.stringify(personalityPresets));
+  renderPresets();
+}
+
+function loadPreset(name) {
+  const preset = personalityPresets[name];
+  if (!preset) return;
+
+  document.getElementById("selfPreservation").value = preset.selfPreservation;
+  document.getElementById("selfPreservationValue").textContent = preset.selfPreservation;
+  
+  document.getElementById("aggression").value = preset.aggression;
+  document.getElementById("aggressionValue").textContent = preset.aggression;
+  
+  document.getElementById("greed").value = preset.greed;
+  document.getElementById("greedValue").textContent = preset.greed;
+  
+  document.getElementById("tacticalDiscipline").value = preset.tacticalDiscipline;
+  document.getElementById("tacticalDisciplineValue").textContent = preset.tacticalDiscipline;
+}
+
+function deletePreset(name) {
+  if (confirm(`Delete preset "${name}"?`)) {
+    delete personalityPresets[name];
+    localStorage.setItem("goblinPresets", JSON.stringify(personalityPresets));
+    renderPresets();
+  }
+}
+
+function renderPresets() {
+  const container = document.getElementById("presetList");
+  container.innerHTML = "";
+
+  Object.keys(personalityPresets).forEach(name => {
+    container.innerHTML += `
+      <button onclick="loadPreset('${name}')" title="Load ${name}">📂 ${name}</button>
+      <button onclick="deletePreset('${name}')" style="background: #ef4444;" title="Delete ${name}">🗑️</button>
+    `;
+  });
+
+  if (Object.keys(personalityPresets).length === 0) {
+    container.innerHTML = "<p style='color: #888; font-size: 0.9em;'>No presets saved yet</p>";
+  }
+}
+
+// Initialize on page load
+renderPresets();
+</script>
+
+</body>
+</html>
